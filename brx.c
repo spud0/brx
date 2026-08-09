@@ -54,7 +54,9 @@ int tap_alloc (char *dev) {
 }             
 
 int tap_fd;
-void _signal_handler (int signal) { close (tap_fd); exit (1); }
+volatile sig_atomic_t keep_running = 1;
+
+void _signal_handler (int signal) { keep_running = 0; }
 
 
 int main (int argc, char * argv[]) {
@@ -65,6 +67,7 @@ int main (int argc, char * argv[]) {
 	} 
 
 	// TODO: Add in getoptlong and proper commands
+
 	char *tap_name = argv[1];
 	printf("tap-name: %s\n", tap_name);
 	
@@ -78,7 +81,10 @@ int main (int argc, char * argv[]) {
 	signal (SIGTERM, _signal_handler);
 	signal (SIGINT , _signal_handler);
 
-	sleep (60);
+	while (keep_running) {
+
+	}
+
 	close (tap_fd);
 	return 0;
 }
