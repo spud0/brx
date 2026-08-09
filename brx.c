@@ -42,10 +42,12 @@ int tap_alloc (char *dev) {
 
 	strncpy(dev, ifr.ifr_name, IFNAMSIZ); 
 
+	#if 0
 	printf ("mac addr: %s\n", ifr.ifr_hwaddr.sa_data);
 	printf ("ip addr: %s\n", ifr.ifr_addr.sa_data);
 	printf ("mtu: %d\n", ifr.ifr_mtu);
 	printf ("interface index %d\n", ifr.ifr_ifindex);
+	#endif
 
 	return fd;
 
