@@ -2,13 +2,14 @@
 #include <stdlib.h>
 
 #define MAC_ADDR_SIZE 6
+#define IP_ADDR_SIZE 4
 
 // The bridge will have a list of devices, list of ports, port_count &
 // a forwarding table
 typedef struct brx_bridge  {
 	struct brx_port * port_ptr;
 	struct brx_forwarding_table * table_ptr; 
-	struct brx_device * device_ptr;
+	struct brx_device_info * device_info_ptr;
 	size_t port_count; 
 } brx_bridge; 
 
@@ -21,15 +22,26 @@ typedef struct brx_port {
 	char has_device;
 } brx_port; 
 
+typedef struct brx_device_info {
+	char mac_address [MAC_ADDR_SIZE];
+	char * interface_name; 	
+	char ip_address [IP_ADDR_SIZE]; 
+	size_t mtu; 
+} brx_device_info;
+
+
 // A device is a linux interface. It'll be assigned a MAC address, 
 // and a name.
 typedef struct brx_device {
-	char mac_address [MAC_ADDR_SIZE];
-	char * interface_name; 	
+	struct brx_device_info info;
+	// TODO: Think of more stuff to add	
 } brx_device; 
+
 
 // A forwarding table relates a list of hosts to a list of ports
 // i.e, you can find Host A on port N, and Host B on port M
+
+// XXX: Figure out 
 typedef struct brx_forwarding_table {
 	struct brx_port * port_ptr; 	
 	char * mac_address_hosts_ptr [MAC_ADDR_SIZE]; 
