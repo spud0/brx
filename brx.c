@@ -26,35 +26,9 @@ void show_usage () {
 	);
 
 	return; 
-}
+}            
 
 
-int tap_alloc (char *name) {
-
-	struct ifreq ifr;
-	int fd;
-
-	if ((fd = open ("/dev/net/tun", O_RDWR)) < 0 )
-		return -1;  
-
-	memset(&ifr, 0, sizeof(ifr));
-
-	/*  Flags: 
-	*	IFF_TUN   - TUN device (no Ethernet headers) 
-	*   IFF_NO_PI - Do not provide packet information  
-	*/ 
-
-	ifr.ifr_flags = IFF_TAP | IFF_NO_PI;
-	if (*name) strncpy(ifr.ifr_name, name, IFNAMSIZ);
-	if ((ioctl(fd, TUNSETIFF, (void *) &ifr)) < 0 ) { goto error; }
-
-	strncpy(name, ifr.ifr_name, IFNAMSIZ); 
-	return fd;
-
-	error: 
-		close (fd); 
-		return -1;
-}             
 
 // Temporarily one giant function, will split into many functions
 void print_interface_metadata(const char *interface_name) {
@@ -95,12 +69,10 @@ void print_interface_metadata(const char *interface_name) {
 
 int tap_fd;
 volatile sig_atomic_t keep_running = 1;
-
 void _signal_handler (int signal) { keep_running = 0; }
 
 
 int main (int argc, char * argv[]) {
-
 
 	signal (SIGHUP , _signal_handler);
 	signal (SIGTERM, _signal_handler);
@@ -148,11 +120,7 @@ int main (int argc, char * argv[]) {
 	}
 
 	#if 0
-	tap_fd = tap_alloc (tap_name);
-	if (tap_fd < 0) {
-		printf ("failed to allocate tap device"); 
-		return 1;
-	}
+	
 
 	
 	// XXX: remove this ...
