@@ -1,4 +1,5 @@
-// Some header files
+#pragma once
+
 #include <stdlib.h>
 
 #define MAC_ADDR_SIZE 6
@@ -54,12 +55,12 @@ typedef struct brx_forwarding_table {
 brx_forwarding_table * get_forwarding_table (void); 
 brx_forwarding_table * add_route (brx_forwarding_table * table); 
 
-brx_port * get_ports (brx_bridge *bridge) 
-brx_port * get_devices (brx_bridge *bridge) 
+brx_port * get_ports   (brx_bridge *bridge) 
+brx_device * get_devices (brx_bridge *bridge) 
 
 brx_device * create_device (const char mac_addr [], char * iface_name )
 void connect_device (brx_port *port, brx_device *dev, brx_bridge * bridge) 
-void remove_device (brx_device *device)
+void remove_device (brx_port *port, brx_device *device)
 
 bool has_device (brx_port port)
 size_t get_port_number (brx_port port) 

@@ -1,11 +1,11 @@
 #include <stdio.h>
 #include <stdlib.h>
-#include <string.h>
 #include <unistd.h>
 #include <time.h>
 #include <fcntl.h>
 #include <signal.h>
 #include <getopt.h>
+#include <string.h>
 #include <sys/socket.h>
 #include <sys/ioctl.h>
 #include <arpa/inet.h>
@@ -13,14 +13,16 @@
 #include <linux/if.h>
 #include <linux/if_tun.h>
 
-
 #include "brx.h"
+#include "utils.h"
 
 
 // TODO: Actually implement
+
 void show_usage () {
 	printf (
 		"Usage: brx <tap | bridge> <show | set | get> <address | table | ...> \n"
+		" <object> <verb> <arguments>\n"
 	);
 
 	return; 
@@ -47,18 +49,11 @@ int tap_alloc (char *name) {
 	if ((ioctl(fd, TUNSETIFF, (void *) &ifr)) < 0 ) { goto error; }
 
 	strncpy(name, ifr.ifr_name, IFNAMSIZ); 
-
-	#if 0
-	printf ("mac addr: %s\n", ifr.ifr_hwaddr.sa_data);
-	printf ("ip addr: %s\n", ifr.ifr_addr.sa_data);
-	printf ("mtu: %d\n", ifr.ifr_mtu);
-	printf ("interface index %d\n", ifr.ifr_ifindex);
-	#endif
-
 	return fd;
 
 	error: 
-		close (fd); return -1;
+		close (fd); 
+		return -1;
 }             
 
 // Temporarily one giant function, will split into many functions
@@ -106,12 +101,11 @@ void _signal_handler (int signal) { keep_running = 0; }
 
 int main (int argc, char * argv[]) {
 
-	#if 0
-	if (argc < 2) {
-		show_usage ();
-		return 1; 
-	} 
-	#endif 
+
+	signal (SIGHUP , _signal_handler);
+	signal (SIGTERM, _signal_handler);
+	signal (SIGINT , _signal_handler);
+
 
 	const char *short_opts = "hv";
 
@@ -143,16 +137,15 @@ int main (int argc, char * argv[]) {
 
 	// Get the rest of the command line arguments
 	int remaining = argc - optind; 	
-	char **rest = &argv[optind - 1]; 
+	char **arguments = &argv[optind - 1]; 
 
-	int idx = 0; 
-	while (idx < remaining) {
-		printf("%d: %s \n", idx, rest[optind + idx ]);
-		idx++;
-	} 	
-
-	goto exit; 
-	
+	// If I have a bridge handle differently than if I have a tap OR port
+	const char *object = arguments[0]; 		
+	if (strncmp(object, "bridge", MAX_BUFFER) == 0) {
+		return handle_bridge (&arguments[1], remaining - 1);
+	} else if (strncmp (object, "tap", MAX_BUFFER) == 0) {
+		return handle_tap (&arguments[1], remaining - 1); 
+	}
 
 	#if 0
 	tap_fd = tap_alloc (tap_name);
@@ -161,22 +154,18 @@ int main (int argc, char * argv[]) {
 		return 1;
 	}
 
-
-	signal (SIGHUP , _signal_handler);
-	signal (SIGTERM, _signal_handler);
-	signal (SIGINT , _signal_handler);
-
+	
 	// XXX: remove this ...
 	print_interface_metadata (tap_name);
-
-
+	#endif
+	
+	#if 0
 	// XXX: Add some brx stuff to create a bridge
 	while (keep_running) {
 	
 	}
 
 	#endif 
-	// close (tap_fd);
 
 	exit: 
 		return 0;
