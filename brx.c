@@ -22,7 +22,9 @@
 void show_usage () {
 	printf (
 		"Usage: brx <tap | bridge> <show | set | get> <address | table | ...> \n"
-		" <object> <verb> <arguments>\n"
+		"When working with a tap in  brx the subcommands are: <create | show | get>  \n"
+		"When working with a bridge in brx the subcommands are: <create | show | get>  \n"
+ 		" <address | table | peer ??? > \n" 
 	);
 
 	return; 
@@ -67,7 +69,6 @@ void print_interface_metadata(const char *interface_name) {
 	return;
 }
 
-int tap_fd;
 volatile sig_atomic_t keep_running = 1;
 void _signal_handler (int signal) { keep_running = 0; }
 
@@ -95,7 +96,7 @@ int main (int argc, char * argv[]) {
 		switch (opt) {
 			case 'h': 
 				show_usage(); 
-				goto exit; 	
+				goto goodbye; 	
 
 			case 'v': 
 				verbose = 1; 
@@ -103,38 +104,40 @@ int main (int argc, char * argv[]) {
 
 			default:
 				show_usage ();
-				return 1; 
+				goto badbye; 
 		}
 	}
 
 	// Get the rest of the command line arguments
 	int remaining = argc - optind; 	
-	char **arguments = &argv[optind - 1]; 
+	char **arguments = &argv[optind]; 
 
 	// If I have a bridge handle differently than if I have a tap OR port
 	const char *object = arguments[0]; 		
+	int result; 
 	if (strncmp(object, "bridge", MAX_BUFFER) == 0) {
-		return handle_bridge (&arguments[1], remaining - 1);
+		result = handle_bridge (&arguments[1], remaining - 1);
 	} else if (strncmp (object, "tap", MAX_BUFFER) == 0) {
-		return handle_tap (&arguments[1], remaining - 1); 
-	}
+		result = handle_tap (&arguments[1], remaining - 1); 
+	} else 
+		goto badbye; 
+
+	if (result) goto badbye; 	
 
 	#if 0
-	
-
-	
 	// XXX: remove this ...
 	print_interface_metadata (tap_name);
 	#endif
 	
-	#if 0
 	// XXX: Add some brx stuff to create a bridge
 	while (keep_running) {
 	
 	}
 
-	#endif 
+	badbye:
+		show_usage();
+		return 1; 
 
-	exit: 
+	goodbye: 
 		return 0;
 }
