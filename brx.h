@@ -26,8 +26,10 @@ typedef struct brx_port {
 typedef struct brx_device_info {
 	char mac_address [MAC_ADDR_SIZE];
 	char * interface_name; 	
-	char ip_address [IP_ADDR_SIZE]; 
+	unsigned int ip_address [IP_ADDR_SIZE]; 
 	size_t mtu; 
+
+	// TODO: Should also store stuff like mode of the device
 } brx_device_info;
 
 
@@ -35,6 +37,8 @@ typedef struct brx_device_info {
 // and a name.
 typedef struct brx_device {
 	struct brx_device_info info;
+
+	int tap_fd;
 	// TODO: Think of more stuff to add	
 } brx_device; 
 
@@ -51,6 +55,9 @@ typedef struct brx_forwarding_table {
 } brx_forwarding_table; 
 
 
+brx_device * create_device (char * name);
+void set_device_metadata (brx_device * dev); 
+
 #if 0
 brx_forwarding_table * get_forwarding_table (void); 
 brx_forwarding_table * add_route (brx_forwarding_table * table); 
@@ -58,7 +65,6 @@ brx_forwarding_table * add_route (brx_forwarding_table * table);
 brx_port * get_ports   (brx_bridge *bridge) 
 brx_device * get_devices (brx_bridge *bridge) 
 
-brx_device * create_device (const char mac_addr [], char * iface_name )
 void connect_device (brx_port *port, brx_device *dev, brx_bridge * bridge) 
 void remove_device (brx_port *port, brx_device *device)
 
