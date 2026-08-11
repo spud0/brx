@@ -5,6 +5,7 @@
 #include <time.h>
 #include <fcntl.h>
 #include <signal.h>
+#include <getopt.h>
 #include <sys/socket.h>
 #include <sys/ioctl.h>
 #include <arpa/inet.h>
@@ -105,46 +106,61 @@ void _signal_handler (int signal) { keep_running = 0; }
 
 int main (int argc, char * argv[]) {
 
+	#if 0
 	if (argc < 2) {
 		show_usage ();
 		return 1; 
 	} 
+	#endif 
 
-	const char *_short_options = ":h:";
+	const char *short_opts = "hv";
 
-	struct option _long_options [] = {
+	struct option long_opts [] = {
 		{"help", no_argument, NULL, 'h' },
 		{"verbose", no_argument, NULL, 'h' },
 		{NULL, 0, NULL, 0 },
-	}
+	};
 
 	// TODO: Add in getoptlong and proper commands
 	int opt;
 	int verbose = 0; 
 
-	if ((opt = getopt_long (argc, argv, short_opts, long_opts, NULL)) < 0) { // XXX; IDK
+	while ((opt = getopt_long (argc, argv, short_opts, long_opts, NULL)) != -1) { 
 		switch (opt) {
 			case 'h': 
 				show_usage(); 
-				break; 
-	
-			default:
-				printf ("ERROR: Unexpected value parsing command-line arguments");
+				goto exit; 	
+
+			case 'v': 
+				verbose = 1; 
 				break;
 
+			default:
+				show_usage ();
+				return 1; 
 		}
 	}
 
+	// Get the rest of the command line arguments
+	int remaining = argc - optind; 	
+	char **rest = &argv[optind - 1]; 
 
+	int idx = 0; 
+	while (idx < remaining) {
+		printf("%d: %s \n", idx, rest[optind + idx ]);
+		idx++;
+	} 	
 
-	char *tap_name = argv[1];
-	printf("tap-name: %s\n", tap_name);
+	goto exit; 
 	
+
+	#if 0
 	tap_fd = tap_alloc (tap_name);
 	if (tap_fd < 0) {
 		printf ("failed to allocate tap device"); 
 		return 1;
 	}
+
 
 	signal (SIGHUP , _signal_handler);
 	signal (SIGTERM, _signal_handler);
@@ -153,11 +169,15 @@ int main (int argc, char * argv[]) {
 	// XXX: remove this ...
 	print_interface_metadata (tap_name);
 
+
 	// XXX: Add some brx stuff to create a bridge
 	while (keep_running) {
 	
 	}
 
-	close (tap_fd);
-	return 0;
+	#endif 
+	// close (tap_fd);
+
+	exit: 
+		return 0;
 }
