@@ -4,7 +4,7 @@ SHELL := /bin/bash
 
 
 build:
-	$(CC) brx.c -o brx 
+	$(CC) brx.c utils.c  -o brx 
 	mkdir -p bin
 	mv -f brx bin/
 
