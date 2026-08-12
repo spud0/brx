@@ -32,7 +32,7 @@ void show_usage () {
 
 
 
-// Temporarily one giant function, will split into many functions
+// XXX: Temporarily one giant function, will split into many functions
 void print_interface_metadata(const char *interface_name) {
     int ctrl_sock;
     struct ifreq ifr;
@@ -69,6 +69,7 @@ void print_interface_metadata(const char *interface_name) {
 	return;
 }
 
+// XXX: This can be moved when the interface is made persistent
 volatile sig_atomic_t keep_running = 1;
 void _signal_handler (int signal) { keep_running = 0; }
 
@@ -115,7 +116,7 @@ int main (int argc, char * argv[]) {
 	// If I have a bridge handle differently than if I have a tap OR port
 	const char *object = arguments[0]; 		
 	int result; 
-	if (strncmp(object, "bridge", MAX_BUFFER) == 0) {
+	if (strncmp (object, "bridge", MAX_BUFFER) == 0) {
 		result = handle_bridge (&arguments[1], remaining - 1);
 	} else if (strncmp (object, "tap", MAX_BUFFER) == 0) {
 		result = handle_tap (&arguments[1], remaining - 1); 
@@ -124,15 +125,8 @@ int main (int argc, char * argv[]) {
 
 	if (result) goto badbye; 	
 
-	#if 0
-	// XXX: remove this ...
-	print_interface_metadata (tap_name);
-	#endif
-	
-	// XXX: Add some brx stuff to create a bridge
-	while (keep_running) {
-	
-	}
+	// XXX: Once the interface is made persistent, this can be moved ...
+	while (keep_running) { }
 
 	badbye:
 		show_usage();
