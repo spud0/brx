@@ -67,10 +67,15 @@ typedef struct brx_device {
 typedef struct brx_bridge  {
 	brx_device bridge_dev; 
 	struct brx_forwarding_table * table_ptr; 
+
 	struct brx_port * ports; 
 	size_t port_count; 
+
+	struct brx_device * devices;
+	size_t device_count; 
 } brx_bridge; 
 
+brx_bridge * bridge;
 
 brx_device * create_device (char * name);
 void free_device (brx_device * dev); 
