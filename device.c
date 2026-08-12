@@ -29,7 +29,7 @@ int show_device (char *tap_name) {
 }
 
 
-brx_device* create_device (char *tap_name) {
+brx_device * create_device (char *tap_name) {
 
 	if (!tap_name) return NULL; 
 
@@ -55,6 +55,20 @@ brx_device* create_device (char *tap_name) {
 	return dev; 
 }
 
+void free_device (brx_device * dev) {
+
+	if (!dev) return; 
+	if (dev->ref_count > 0) return;
+
+	if (dev->ref_count == 0) {
+		// XXX: Remove from kernel data structure ...		
+		close (dev->tap_fd); 
+		free (dev); 
+	}
+
+	return;
+}
+
 
 void set_device_metadata (brx_device *dev) {
 	// TODO: Implement
@@ -64,3 +78,9 @@ void set_device_metadata (brx_device *dev) {
 brx_device_info * get_device_metadata (brx_device * dev) {
 	return NULL;
 }
+
+brx_device * get_devices (brx_bridge * bridge) {
+	if (!bridge) return NULL; 
+	
+}
+

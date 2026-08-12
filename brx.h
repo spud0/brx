@@ -75,20 +75,22 @@ typedef struct brx_bridge  {
 brx_device * create_device (char * name);
 void free_device (brx_device * dev); 
 
-void set_device_metadata (brx_device * dev); 
 brx_device_info * get_device_metadata (brx_device * dev); 
+void set_device_metadata (brx_device * dev); 
+
+
+brx_device * get_devices (brx_bridge * bridge);
 
 #if 0
 brx_forwarding_table * get_forwarding_table (void); 
 brx_forwarding_table * add_route (brx_forwarding_table * table); 
 
 brx_port * get_ports   (brx_bridge *bridge) 
-brx_device * get_devices (brx_bridge *bridge) 
 
 void connect_device (brx_port *port, brx_device *dev, brx_bridge * bridge) 
 void remove_device (brx_port *port, brx_device *device)
 
-bool has_device (brx_port port)
-size_t get_port_number (brx_port port) 
-brx_device * get_device_on_port (brx_port port)
+bool has_device (brx_port * port);
+size_t get_port_number (brx_port * port);
+brx_device * get_device_on_port (size_t port_index);
 #endif 
