@@ -4,10 +4,11 @@ SHELL := /bin/bash
 
 
 build:
-	$(CC) brx.c utils.c  -o brx 
+	$(CC) brx.c utils.c bridge.c device.c -o brx 
 	mkdir -p bin
 	mv -f brx bin/
 
 clean:
 	rm -rf bin
+
 
