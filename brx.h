@@ -65,30 +65,38 @@ typedef struct brx_device {
 
 // If I used the kernel's bridge, I don't get to reinvent the wheel ... 
 typedef struct brx_bridge  {
-	brx_device bridge_dev; 
+	brx_device * bridge_dev; 
 	struct brx_forwarding_table * table_ptr; 
+
 	struct brx_port * ports; 
 	size_t port_count; 
+
+	struct brx_device * devices;
+	size_t device_count; 
 } brx_bridge; 
 
 
 brx_device * create_device (char * name);
 void free_device (brx_device * dev); 
 
-void set_device_metadata (brx_device * dev); 
 brx_device_info * get_device_metadata (brx_device * dev); 
+void set_device_metadata (brx_device * dev); 
+
+
+brx_device * get_devices (brx_bridge * bridge);
+brx_device * get_device_by_name (brx_device ** devices, const char * name);
+// brx_device * get_device_by_name (char * name, brx_bridge * bridge);
 
 #if 0
 brx_forwarding_table * get_forwarding_table (void); 
 brx_forwarding_table * add_route (brx_forwarding_table * table); 
 
 brx_port * get_ports   (brx_bridge *bridge) 
-brx_device * get_devices (brx_bridge *bridge) 
 
 void connect_device (brx_port *port, brx_device *dev, brx_bridge * bridge) 
 void remove_device (brx_port *port, brx_device *device)
 
-bool has_device (brx_port port)
-size_t get_port_number (brx_port port) 
-brx_device * get_device_on_port (brx_port port)
+bool has_device (brx_port * port);
+size_t get_port_number (brx_port * port);
+brx_device * get_device_on_port (size_t port_index);
 #endif 

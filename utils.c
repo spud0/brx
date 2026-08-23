@@ -75,7 +75,9 @@ int handle_tap (char * arguments[], int length) {
 	if (strncmp(object, "create", MAX_BUFFER) == 0) {
 		return  create_device (arguments[1]) == NULL; 
 	} else if (strncmp (object, "show", MAX_BUFFER) == 0) {
-		return show_device (arguments[1]); 
+		char * formatted_str = show_device (arguments[1]);
+		printf ("%s\n", formatted_str); 
+		return 0;
 	} else if (strncmp (object, "delete", MAX_BUFFER) == 0) {
 		// return remove_device (); 
 	} else return 1; 
@@ -83,58 +85,40 @@ int handle_tap (char * arguments[], int length) {
 	return 1; 
 }
 
-char * brx_show_ip (unsigned char * ip) {
-	return NULL;
-}
 
-int show_device (char *tap_name) {
+// XXX: Temporarily one giant function, will split into many functions
+void print_interface_metadata(const char *interface_name) {
+    int ctrl_sock;
+    struct ifreq ifr;
 
-	if (!tap_name) return 1; 
+    // 1. Open a temporary socket specifically for control plane commands
+    ctrl_sock = socket(AF_INET, SOCK_DGRAM, 0);
+    if (ctrl_sock < 0) {
+        perror("Failed to open control socket");
+        return;
+    }
 
-	brx_device_info * info = get_device_metadata (...); 
-	if (!info) return 1; 
+    // Target the specific interface name we are inspecting
+    memset(&ifr, 0, sizeof(ifr));
+    strncpy(ifr.ifr_name, interface_name, IFNAMSIZ);
 
-	printf ("Device Name: [%s]\n", tap_name);
-	printf ("MAC Address: [%s]\n", info->mac_address);
-	printf ("IP  Address: [%s]\n", brx_show_ip(info->ip_address));
-	printf ("MTU:         [%zu]\n",info->mtu);
+    // 2. Fetch the Maximum Transmission Unit (MTU)
+    if (ioctl(ctrl_sock, SIOCGIFMTU, &ifr) >= 0) {
+        printf("Interface: %s | MTU Size: %d bytes\n", interface_name, ifr.ifr_mtu);
+    }
 
-	return 0; 
-}
+    // 3. Fetch the Hardware (MAC) Address
+    if (ioctl(ctrl_sock, SIOCGIFHWADDR, &ifr) >= 0) {
+        unsigned char *mac = (unsigned char *) ifr.ifr_hwaddr.sa_data;
+        printf("MAC Address: %02x:%02x:%02x:%02x:%02x:%02x\n", 
+               mac[0], mac[1], mac[2], mac[3], mac[4], mac[5]);
+    }
 
+    // 4. Fetch Operational Interface Flags (Up/Down, Running)
+    if (ioctl(ctrl_sock, SIOCGIFFLAGS, &ifr) >= 0) {
+        printf("Status: %s\n", (ifr.ifr_flags & IFF_UP) ? "UP" : "DOWN");
+    }
 
-brx_device* create_device (char *tap_name) {
-
-	if (!tap_name) return NULL; 
-
-	// XXX: There is a very small chance that malloc fails	
-	brx_device *dev = malloc (sizeof(brx_device));
-	if (!dev) return NULL;  
-
-	// XXX: Should be strncpy ??? 	
-	dev->info.interface_name = tap_name; 	
-	dev->ref_count = 1; 
-
-	dev->tap_fd = tap_alloc (tap_name);
-	if (dev->tap_fd < 0) {
-		printf ("failed to allocate tap device"); 
-		return NULL;
-	}
-	
-	printf ("%s\n", tap_name); 
-
-	// XXX: Make a series of system calls using ioctl to get 
-	// information about the tap device 
-	set_device_metadata (dev); 
-	return dev; 
-}
-
-
-void set_device_metadata (brx_device *dev) {
-	// TODO: Implement
+    close(ctrl_sock);
 	return;
-}
-
-brx_device_info * get_device_metadata (brx_device * dev) {
-	return NULL;
 }

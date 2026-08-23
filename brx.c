@@ -31,43 +31,28 @@ void show_usage () {
 }            
 
 
+brx_bridge * bridge = NULL; 
 
-// XXX: Temporarily one giant function, will split into many functions
-void print_interface_metadata(const char *interface_name) {
-    int ctrl_sock;
-    struct ifreq ifr;
+// XXX: Actually fix this implementation so its for bridges ...
+int show_bridge (char *tap_name) {
 
-    // 1. Open a temporary socket specifically for control plane commands
-    ctrl_sock = socket(AF_INET, SOCK_DGRAM, 0);
-    if (ctrl_sock < 0) {
-        perror("Failed to open control socket");
-        return;
-    }
+	if (!tap_name) return 1; 
 
-    // Target the specific interface name we are inspecting
-    memset(&ifr, 0, sizeof(ifr));
-    strncpy(ifr.ifr_name, interface_name, IFNAMSIZ);
+	brx_device_info * info = &bridge->bridge_dev->info;
 
-    // 2. Fetch the Maximum Transmission Unit (MTU)
-    if (ioctl(ctrl_sock, SIOCGIFMTU, &ifr) >= 0) {
-        printf("Interface: %s | MTU Size: %d bytes\n", interface_name, ifr.ifr_mtu);
-    }
+	if (!info) return 1; 
 
-    // 3. Fetch the Hardware (MAC) Address
-    if (ioctl(ctrl_sock, SIOCGIFHWADDR, &ifr) >= 0) {
-        unsigned char *mac = (unsigned char *) ifr.ifr_hwaddr.sa_data;
-        printf("MAC Address: %02x:%02x:%02x:%02x:%02x:%02x\n", 
-               mac[0], mac[1], mac[2], mac[3], mac[4], mac[5]);
-    }
+	printf ("Device Name: [%s]\n", info->interface_name);
+	printf ("MAC Address: [%s]\n", info->mac_address);
+	printf ("IP  Address: [%s]\n", brx_show_ip (info->ip_address));
+	printf ("MTU:         [%zu]\n",info->mtu);
 
-    // 4. Fetch Operational Interface Flags (Up/Down, Running)
-    if (ioctl(ctrl_sock, SIOCGIFFLAGS, &ifr) >= 0) {
-        printf("Status: %s\n", (ifr.ifr_flags & IFF_UP) ? "UP" : "DOWN");
-    }
-
-    close(ctrl_sock);
-	return;
+	return 0; 
 }
+
+
+
+
 
 // XXX: This can be moved when the interface is made persistent
 volatile sig_atomic_t keep_running = 1;
@@ -134,4 +119,5 @@ int main (int argc, char * argv[]) {
 
 	goodbye: 
 		return 0;
+
 }
