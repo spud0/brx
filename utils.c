@@ -75,7 +75,9 @@ int handle_tap (char * arguments[], int length) {
 	if (strncmp(object, "create", MAX_BUFFER) == 0) {
 		return  create_device (arguments[1]) == NULL; 
 	} else if (strncmp (object, "show", MAX_BUFFER) == 0) {
-		return show_device (arguments[1]); 
+		char * formatted_str = show_device (arguments[1]);
+		printf ("%s\n", formatted_str); 
+		return 0;
 	} else if (strncmp (object, "delete", MAX_BUFFER) == 0) {
 		// return remove_device (); 
 	} else return 1; 
@@ -84,3 +86,39 @@ int handle_tap (char * arguments[], int length) {
 }
 
 
+// XXX: Temporarily one giant function, will split into many functions
+void print_interface_metadata(const char *interface_name) {
+    int ctrl_sock;
+    struct ifreq ifr;
+
+    // 1. Open a temporary socket specifically for control plane commands
+    ctrl_sock = socket(AF_INET, SOCK_DGRAM, 0);
+    if (ctrl_sock < 0) {
+        perror("Failed to open control socket");
+        return;
+    }
+
+    // Target the specific interface name we are inspecting
+    memset(&ifr, 0, sizeof(ifr));
+    strncpy(ifr.ifr_name, interface_name, IFNAMSIZ);
+
+    // 2. Fetch the Maximum Transmission Unit (MTU)
+    if (ioctl(ctrl_sock, SIOCGIFMTU, &ifr) >= 0) {
+        printf("Interface: %s | MTU Size: %d bytes\n", interface_name, ifr.ifr_mtu);
+    }
+
+    // 3. Fetch the Hardware (MAC) Address
+    if (ioctl(ctrl_sock, SIOCGIFHWADDR, &ifr) >= 0) {
+        unsigned char *mac = (unsigned char *) ifr.ifr_hwaddr.sa_data;
+        printf("MAC Address: %02x:%02x:%02x:%02x:%02x:%02x\n", 
+               mac[0], mac[1], mac[2], mac[3], mac[4], mac[5]);
+    }
+
+    // 4. Fetch Operational Interface Flags (Up/Down, Running)
+    if (ioctl(ctrl_sock, SIOCGIFFLAGS, &ifr) >= 0) {
+        printf("Status: %s\n", (ifr.ifr_flags & IFF_UP) ? "UP" : "DOWN");
+    }
+
+    close(ctrl_sock);
+	return;
+}

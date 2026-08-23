@@ -65,7 +65,7 @@ typedef struct brx_device {
 
 // If I used the kernel's bridge, I don't get to reinvent the wheel ... 
 typedef struct brx_bridge  {
-	brx_device bridge_dev; 
+	brx_device * bridge_dev; 
 	struct brx_forwarding_table * table_ptr; 
 
 	struct brx_port * ports; 
@@ -75,7 +75,6 @@ typedef struct brx_bridge  {
 	size_t device_count; 
 } brx_bridge; 
 
-brx_bridge * bridge;
 
 brx_device * create_device (char * name);
 void free_device (brx_device * dev); 
@@ -85,6 +84,8 @@ void set_device_metadata (brx_device * dev);
 
 
 brx_device * get_devices (brx_bridge * bridge);
+brx_device * get_device_by_name (brx_device ** devices, const char * name);
+// brx_device * get_device_by_name (char * name, brx_bridge * bridge);
 
 #if 0
 brx_forwarding_table * get_forwarding_table (void); 

@@ -11,6 +11,7 @@
 #include "brx.h"
 
 char * brx_show_ip (unsigned char * ip) {
+	// snprint
 	return NULL;
 }
 
@@ -27,22 +28,27 @@ brx_device * get_device_by_name (brx_device ** devices, const char * name) {
 	return NULL;
 }
 
-int show_device (char *tap_name) {
 
-	if (!tap_name) return 1; 
+char * show_device (char *tap_name) {
+
+	#if 0
+	if (!tap_name) return NULL; 
 
 	brx_device_info * info = get_device_metadata (
 		get_device_by_name (tap_name, get_devices (bridge))
 	); 
 
-	if (!info) return 1; 
+	if (!info) return NULL; 
 
+	// Use snprintf
 	printf ("Device Name: [%s]\n", info->interface_name);
 	printf ("MAC Address: [%s]\n", info->mac_address);
 	printf ("IP  Address: [%s]\n", brx_show_ip(info->ip_address));
 	printf ("MTU:         [%zu]\n",info->mtu);
 
-	return 0; 
+	return ""; 
+	#endif 
+	return NULL; 
 }
 
 
