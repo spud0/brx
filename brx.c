@@ -52,18 +52,9 @@ int show_bridge (char *tap_name) {
 
 
 
-
-
-// XXX: This can be moved when the interface is made persistent
-volatile sig_atomic_t keep_running = 1;
-void _signal_handler (int signal) { keep_running = 0; }
-
-
 int main (int argc, char * argv[]) {
 
-	signal (SIGHUP , _signal_handler);
-	signal (SIGTERM, _signal_handler);
-	signal (SIGINT , _signal_handler);
+	// int socket = socket (AF_UNIX)
 
 
 	const char *short_opts = "hv";
@@ -110,8 +101,6 @@ int main (int argc, char * argv[]) {
 
 	if (result) goto badbye; 	
 
-	// XXX: Once the interface is made persistent, this can be moved ...
-	while (keep_running) { }
 
 	badbye:
 		show_usage();
