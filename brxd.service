@@ -1,0 +1,15 @@
+[Unit]
+Description=brx daemon
+After=network.target
+
+[Service]
+Type=simple
+ExecStart=/usr/local/bin/brxd
+Restart=on-failure
+RestartSec=5
+StandardOutput=journal
+StandardError=journal
+SyslogIdentifier=brxd
+
+[Install]
+WantedBy=multi-user.target
