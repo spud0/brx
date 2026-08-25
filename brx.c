@@ -119,7 +119,7 @@ int main (int argc, char * argv[]) {
 	} else 
 		goto badbye; 
 
-	if (result) goto badbye; 	
+	if (result == 1) goto badbye; 	
 
 
 	badbye:
