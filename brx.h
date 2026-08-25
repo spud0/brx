@@ -76,6 +76,23 @@ typedef struct brx_bridge  {
 } brx_bridge; 
 
 
+
+// Types of messages ... 
+enum message_type {
+	CREATE,
+	DELETE,
+	SHOW,
+	SUCCESS,
+	ERROR
+}
+
+// XXX: Passed across the UDS and is used for setting up control plane stuff ... 
+typedef struct brx_control_message {
+	size_t length;
+	message_type type;
+} brx_control_message; 
+
+
 brx_device * create_device (char * name);
 void free_device (brx_device * dev); 
 
