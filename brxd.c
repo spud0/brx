@@ -10,8 +10,6 @@
 
 #include "utils.h"
 
-#define SOCKET_PATH "/tmp/brx-control-uds.sock"
-#define MAX_CONNS 32
 
 volatile sig_atomic_t keep_running = 1;
 
