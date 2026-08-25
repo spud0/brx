@@ -2,8 +2,11 @@
 
 #define MAX_BUFFER 16
 
-int handle_bridge (char * arguments[], int length); 
-int handle_tap (char * arguments[], int length); 
+#define SOCKET_PATH "/tmp/brx-control-uds.sock"
+#define MAX_CONNS 32
+
+int handle_bridge (char * arguments[], int length, int client_fd); 
+int handle_tap (char * arguments[], int length, int client_fd); 
 
 int tap_alloc (char * tap_name); 
 
@@ -12,3 +15,5 @@ char * brx_show_mac (unsigned char * ip);
 char * show_device (char *tap_name);
 
 void print_interface_metadata(const char *interface_name);
+
+static int close_non_standard_fds (void);

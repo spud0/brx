@@ -1,14 +1,15 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <unistd.h>
+
 #include <time.h>
-#include <fcntl.h>
-#include <signal.h>
+
 #include <getopt.h>
 #include <string.h>
+
 #include <sys/socket.h>
-#include <sys/ioctl.h>
-#include <arpa/inet.h>
+#include <sys/un.h>
+
 
 #include <linux/if.h>
 #include <linux/if_tun.h>
@@ -30,6 +31,7 @@ void show_usage () {
 	return; 
 }            
 
+#if 0
 
 brx_bridge * bridge = NULL; 
 
@@ -50,22 +52,12 @@ int show_bridge (char *tap_name) {
 	return 0; 
 }
 
-
-
-
-
-// XXX: This can be moved when the interface is made persistent
-volatile sig_atomic_t keep_running = 1;
-void _signal_handler (int signal) { keep_running = 0; }
+#endif 
 
 
 int main (int argc, char * argv[]) {
 
-	signal (SIGHUP , _signal_handler);
-	signal (SIGTERM, _signal_handler);
-	signal (SIGINT , _signal_handler);
-
-
+	
 	const char *short_opts = "hv";
 
 	struct option long_opts [] = {
@@ -99,19 +91,36 @@ int main (int argc, char * argv[]) {
 	char **arguments = &argv[optind]; 
 
 	// If I have a bridge handle differently than if I have a tap OR port
-	const char *object = arguments[0]; 		
-	int result; 
+	const char *object = arguments[0]; int result; 
+
+	// Connect to the server once its determined that its not a help message.
+	int client_fd = socket (AF_UNIX, SOCK_STREAM, 0);
+	if (client_fd < 0) {
+		perror ("Failed to create Unix Domain Socket ...");
+		return 1;
+	}
+
+	struct sockaddr_un address; 
+	memset (&address, 0, sizeof(struct sockaddr_un));
+	address.sun_family = AF_UNIX; 
+	strncpy (address.sun_path, SOCKET_PATH, sizeof(address.sun_path) - 1);
+
+	if (connect (client_fd, (struct sockaddr *)&address, sizeof(struct sockaddr_un)) < 0) {
+		perror ("Failed to connect to brx daemon");
+		close(client_fd);
+		return 1; 
+	}
+
+
 	if (strncmp (object, "bridge", MAX_BUFFER) == 0) {
-		result = handle_bridge (&arguments[1], remaining - 1);
+		result = handle_bridge (&arguments[1], remaining - 1, client_fd);
 	} else if (strncmp (object, "tap", MAX_BUFFER) == 0) {
-		result = handle_tap (&arguments[1], remaining - 1); 
+		result = handle_tap (&arguments[1], remaining - 1, client_fd); 
 	} else 
 		goto badbye; 
 
-	if (result) goto badbye; 	
+	if (result == 1) goto badbye; 	
 
-	// XXX: Once the interface is made persistent, this can be moved ...
-	while (keep_running) { }
 
 	badbye:
 		show_usage();

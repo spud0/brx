@@ -45,14 +45,69 @@ int tap_alloc (char *name) {
 } 
 
 
-int handle_bridge (char * arguments[], int length) {
+brx_control_message * create_message (message_type type) {
 
-	if ((!arguments) || (length == 0))  return -1; 
+	brx_control_message * message = malloc (sizeof (brx_control_message));
+	if (!message) return NULL; 
+
+	message->type = type;
+	message->length = sizeof(brx_control_message);
+	return message; 
+}
+
+void free_message (brx_control_message * message) {
+	free (message);
+	return;
+}
+
+// TODO: Reimplement this. 
+int handle_bridge (char * arguments[], int length, int client_fd) {
+
+	if ((!arguments) || (length == 0))  return 1; 
+
+	// Need to have some sort of Control Plane Message 
+	// int txed = write (client_fd, ); 
 
 	const char* object = arguments[0];
+	message_type type = ERROR; 
 
 	if (strncmp(object, "create", MAX_BUFFER) == 0) {
-		// return create_bridge (); 
+
+		type = CREATE; 
+		brx_control_message * message = create_message (type);
+		message->type = type;
+		message->length = sizeof(brx_control_message);
+
+		printf("sizeof(brx_control_message) = %zu\n", sizeof(brx_control_message));
+
+
+		int txed = write (client_fd, message, sizeof(brx_control_message));
+
+		if (txed != sizeof(brx_control_message)) {
+			// ERROR 
+			printf("something weird with transmitting");
+			return 1;
+		}
+
+		int rxed = read (client_fd, message, sizeof(brx_control_message));
+		if (rxed != sizeof (brx_control_message)) {
+			// ERROR
+			printf("something weird with receiving");
+			free_message(message);
+			return 1;
+		}
+
+		if (message->type == SUCCESS) {
+			printf("good\n");
+		}
+
+		if (message->type == ERROR)  {
+			printf("not good\n");
+		}
+
+		free_message(message);
+
+		return 0; 
 	} else if (strncmp (object, "show", MAX_BUFFER) == 0) {
 		// return show_bridge (); 
 	} else if (strncmp (object, "delete", MAX_BUFFER) == 0) {
@@ -61,11 +116,11 @@ int handle_bridge (char * arguments[], int length) {
 		// return add_device_to_bridge ();
 	}
 
-	return 1; 
+	return 0; 
 }
 
 
-int handle_tap (char * arguments[], int length) {
+int handle_tap (char * arguments[], int length, int client_fd) {
 
 	if ((!arguments) || (length == 0))  return -1; 
 
@@ -73,6 +128,7 @@ int handle_tap (char * arguments[], int length) {
 
 	// XXX: Implement these
 	if (strncmp(object, "create", MAX_BUFFER) == 0) {
+
 		return  create_device (arguments[1]) == NULL; 
 	} else if (strncmp (object, "show", MAX_BUFFER) == 0) {
 		char * formatted_str = show_device (arguments[1]);
