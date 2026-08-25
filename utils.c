@@ -45,13 +45,22 @@ int tap_alloc (char *name) {
 } 
 
 
-int handle_bridge (char * arguments[], int length) {
+// TODO: Reimplement this. 
+int handle_bridge (char * arguments[], int length, int client_fd) {
 
 	if ((!arguments) || (length == 0))  return -1; 
+
+	// Need to have some sort of Control Plane Message 
+	// int txed = write (client_fd, ); 
 
 	const char* object = arguments[0];
 
 	if (strncmp(object, "create", MAX_BUFFER) == 0) {
+		
+		// Call write, send a "CREATE type message ..."
+		// Check if sizeof(brx_ctrl_message) == txed
+		// Then read for a "SUCCESS type message ... "
+
 		// return create_bridge (); 
 	} else if (strncmp (object, "show", MAX_BUFFER) == 0) {
 		// return show_bridge (); 
@@ -65,7 +74,7 @@ int handle_bridge (char * arguments[], int length) {
 }
 
 
-int handle_tap (char * arguments[], int length) {
+int handle_tap (char * arguments[], int length, int client_fd) {
 
 	if ((!arguments) || (length == 0))  return -1; 
 
