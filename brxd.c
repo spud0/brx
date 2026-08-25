@@ -9,6 +9,7 @@
 #include <sys/un.h>
 
 #include "utils.h"
+#include "brx.h"
 
 
 volatile sig_atomic_t keep_running = 1;
@@ -59,7 +60,7 @@ int main (int argc, char * argv[]) {
 
 
     // Up to 32 incoming connections ...
-    if (listen(server_fd, MAX_CONNS) < 0 ) {
+    if (listen(server_fd, MAX_CONNS) < 0) {
         current_time = time(NULL);
         syslog (LOG_ERR, "Failed to listen on socket; Current Time: %s", ctime(&current_time)); 
         close (server_fd);
@@ -68,8 +69,28 @@ int main (int argc, char * argv[]) {
     current_time = time(NULL);
     syslog (LOG_INFO, "Listening on %s; Current Time: %s", SOCKET_PATH, ctime(&current_time)); 
 
+    int client_fd; 
     while (keep_running) {
         // TODO: Implement message passing between client command line & daemon
+        client_fd = accept(server_fd, NULL, NULL);
+        if (client_fd < 0) {
+            syslog (LOG_ERR, "Accepting client connection failed ...");
+            continue;
+        }
+
+        brx_control_message * message = create_message(ERROR);
+		syslog (LOG_INFO, "sizeof(brx_control_message) = %zu\n", sizeof(brx_control_message));
+
+
+        int rxed = read(client_fd, message, sizeof(brx_control_message));
+        if (rxed != sizeof(brx_control_message)) syslog (LOG_ERR, "Received some malformed data");
+        syslog (LOG_INFO, "Received message with length %d", message->length);
+
+        message->type = SUCCESS;
+        int txed = write (client_fd, message, sizeof(brx_control_message));
+        if (txed != sizeof(brx_control_message)) syslog (LOG_ERR, "Writing data failed for some reason");
+        syslog (LOG_INFO, "Sent message with length %d", message->length);
+
     }
 
 
