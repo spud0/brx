@@ -9,7 +9,7 @@ client:
 	mv -f brx bin/
 
 server: 
-	$(CC) brxd.c utils.c bridge.c device.c -o brxd
+	$(CC) brxd.c utils.c bridge.c device.c -o brxd -lsystemd
 	mkdir -p bin
 	mv -f brxd bin/
 
