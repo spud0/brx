@@ -1,19 +1,16 @@
 #include <stdio.h>
 #include <unistd.h>
 #include <signal.h>
-
+#include <time.h>
 #include <stdlib.h>
 #include <string.h>
 #include <sys/socket.h>
+#include <syslog.h>
 #include <sys/un.h>
-
-#ifdef HAVE_SYSTEMD
-#include <systemd/sd-daemon.h>
-#endif 
 
 #include "utils.h"
 
-#define SOCKET_PATH "/tmp/brx-"
+#define SOCKET_PATH "/tmp/brx-control-uds.sock"
 
 volatile sig_atomic_t keep_running = 1;
 
@@ -27,8 +24,14 @@ int main (int argc, char * argv[]) {
         
     // Register signal handlers
 
-    signal(SIGTERM, handle_signal);
-    signal(SIGINT, handle_signal);
+    signal (SIGTERM, handle_signal);
+    signal (SIGINT, handle_signal);
+
+    openlog ("brxd", LOG_PID, LOG_DAEMON);
+
+    time_t current_time = time(NULL);
+    syslog (LOG_INFO, "Starting the brxd daemon; Current Time: %s", ctime(&current_time));
+
 
     printf("Starting brxcd ... \n");
 
@@ -53,7 +56,7 @@ int main (int argc, char * argv[]) {
 
     #endif 
 
-    
+
 
 
     // Cleanup 
