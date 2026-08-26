@@ -81,18 +81,37 @@ typedef enum {
 	CREATE,
 	DELETE,
 	SHOW,
+	CONNECT,
 	SUCCESS,
-	ERROR
+	ERROR,
+	UNKNOWN
 } message_type;
+
+// Types of messages ... 
+typedef enum {
+	BRIDGE,
+	TAP,
+} device_type;
 
 
 // XXX: Passed across the UDS and is used for setting up control plane stuff ... 
 typedef struct brx_control_message {
 	size_t length;
-	message_type type;
+	message_type control_type;
+	device_type dev_type;
+	size_t port_count;
+	char *bridge_name;
+	char *tap_name;
 } brx_control_message; 
 
-brx_control_message * create_message (message_type type);
+brx_control_message * create_message (
+	message_type control_type, 
+	device_type dev_type, 
+	size_t port_count,
+	char * bridge_name,
+	char * tap_name
+);
+
 void free_message (brx_control_message * message);
 
 

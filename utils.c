@@ -44,13 +44,21 @@ int tap_alloc (char *name) {
 		return -1;
 } 
 
-
-brx_control_message * create_message (message_type type) {
+brx_control_message * create_message (
+	message_type control_type, 
+	device_type dev_type, 
+	size_t port_count,
+	char * bridge_name,
+	char * tap_name
+) {
 
 	brx_control_message * message = malloc (sizeof (brx_control_message));
 	if (!message) return NULL; 
 
-	message->type = type;
+	message->control_type = control_type;
+	message->dev_type = dev_type;
+	message->tap_name = tap_name;
+	message->bridge_name = bridge_name;
 	message->length = sizeof(brx_control_message);
 	return message; 
 }
@@ -73,16 +81,15 @@ int handle_bridge (char * arguments[], int length, int client_fd) {
 
 	if (strncmp(object, "create", MAX_BUFFER) == 0) {
 
-		type = CREATE; 
-		brx_control_message * message = create_message (type);
-		message->type = type;
-		message->length = sizeof(brx_control_message);
-
-		printf("sizeof(brx_control_message) = %zu\n", sizeof(brx_control_message));
-
+		brx_control_message * message = create_message (
+			CREATE,
+			BRIDGE,
+			(size_t) atoi (object[2]),
+			object[0],
+			NULL
+		);
 
 		int txed = write (client_fd, message, sizeof(brx_control_message));
-
 		if (txed != sizeof(brx_control_message)) {
 			// ERROR 
 			printf("something weird with transmitting");
@@ -97,17 +104,12 @@ int handle_bridge (char * arguments[], int length, int client_fd) {
 			return 1;
 		}
 
-		if (message->type == SUCCESS) {
-			printf("good\n");
-		}
-
-		if (message->type == ERROR)  {
-			printf("not good\n");
-		}
+		if (message->control_type == SUCCESS) printf("good\n");
+		if (message->control_type == ERROR) printf("not good\n");
 
 		free_message(message);
-
 		return 0; 
+
 	} else if (strncmp (object, "show", MAX_BUFFER) == 0) {
 		// return show_bridge (); 
 	} else if (strncmp (object, "delete", MAX_BUFFER) == 0) {
