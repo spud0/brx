@@ -7,6 +7,9 @@
 #define MAC_ADDR_SIZE 6
 #define IP_ADDR_SIZE 4
 
+#define BRX_NAME_MAX 64
+#define BRX_ERR_MAX 64
+
 
 // XXX: An entry in the switch/bridge's "forwarding database", almost like a key value ...
 typedef struct brx_fdb_entry {
@@ -38,10 +41,10 @@ typedef struct brx_port {
 
 // Metadata about a device (tap0, etc), this is the MAC Address, IP Address, Name, MTU, State, etc...
 typedef struct brx_device_info {
-	char mac_address [MAC_ADDR_SIZE];
-	char * interface_name; 	
+	unsigned char mac_address [MAC_ADDR_SIZE];
 	unsigned char ip_address [IP_ADDR_SIZE]; 
-	size_t mtu; 
+	char interface_name [BRX_NAME_MAX]; 	
+	size_t port_count; 
 	// TODO: Should also store stuff like mode of the device
 } brx_device_info;
 
@@ -52,7 +55,7 @@ typedef struct brx_device_info {
 // the device will be freed, since it will have a reference count of 0
 
 typedef struct brx_device {
-	struct brx_device_info info;
+	// struct brx_device_info info;
 	int tap_fd;
 	size_t ref_count; 
 	// TODO: Think of more stuff to add	
@@ -81,18 +84,56 @@ typedef enum {
 	CREATE,
 	DELETE,
 	SHOW,
+	CONNECT,
 	SUCCESS,
-	ERROR
-} message_type;
+	ERROR,
+	UNKNOWN
+} brx_message_type;
 
+// Types of messages ... 
+typedef enum {
+	BRIDGE,
+	TAP,
+} brx_device_type;
+
+// Will have more fields soon
+typedef struct brx_bridge_info {
+	brx_device_info info; 	
+} brx_bridge_info; 
+
+// Will have more fields soon
+typedef struct brx_tap_info {
+	brx_device_info info; 	
+	size_t mtu;
+} brx_tap_info; 
 
 // XXX: Passed across the UDS and is used for setting up control plane stuff ... 
 typedef struct brx_control_message {
-	size_t length;
-	message_type type;
+	brx_message_type control_type;
+	brx_device_type dev_type;
+
+	union {
+
+		// Used for CREATE & DELETE messages
+		brx_device_info req; 
+	
+		// Used for getting metadata about tap's and bridge's
+		brx_tap_info tap_info;
+		brx_bridge_info bridge_info;
+
+	} payload; 
+
+	char error [BRX_ERR_MAX];
 } brx_control_message; 
 
-brx_control_message * create_message (message_type type);
+brx_control_message * create_message (
+	brx_message_type control_type, 
+	brx_device_type dev_type, 
+	size_t port_count,
+	char * bridge_name,
+	char * tap_name
+);
+
 void free_message (brx_control_message * message);
 
 

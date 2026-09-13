@@ -1,5 +1,7 @@
 #pragma once
 
+#include <stdlib.h>
+
 #define MAX_BUFFER 16
 
 #define SOCKET_PATH "/tmp/brx-control-uds.sock"
@@ -17,3 +19,5 @@ char * show_device (char *tap_name);
 void print_interface_metadata(const char *interface_name);
 
 static int close_non_standard_fds (void);
+static int write_full(int fd, const void *buf, size_t count);
+static int read_full(int fd, void *buf, size_t count); 
