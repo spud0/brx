@@ -85,6 +85,37 @@ void free_message (brx_control_message * message) {
 	return;
 }
 
+
+static int _write_full(int fd, const void *buf, size_t count) {
+    size_t total = 0;
+    const char *p = buf;
+    while (total < count) {
+        ssize_t n = write(fd, p + total, count - total);
+        if (n <= 0) return -1; // error or peer closed mid-write
+        total += (size_t) n;
+    }
+    return 0;
+}
+
+static int _read_full(int fd, void *buf, size_t count) {
+    size_t total = 0;
+    char *p = buf;
+    while (total < count) {
+        ssize_t n = read(fd, p + total, count - total);
+        if (n <= 0) return -1; // error or peer closed
+        total += (size_t) n;
+    }
+    return 0;
+}
+
+int send_brx_message(int fd, brx_control_message *msg) {
+    return _write_full(fd, msg, sizeof(brx_control_message));
+}
+
+int recv_brx_message(int fd, brx_control_message *msg) {
+    return _read_full(fd, msg, sizeof(brx_control_message));
+}
+
 // TODO: Reimplement this. 
 int handle_bridge (char * arguments[], int length, int client_fd) {
 
@@ -93,45 +124,133 @@ int handle_bridge (char * arguments[], int length, int client_fd) {
 	const char* object = arguments[0];
 	if (strncmp(object, "create", MAX_BUFFER) == 0) {
 
+		if (length < 2) {
+			perror ("Usage: brx bridge create <name> [ports]\n"); 	
+			return 1; 
+		} 
+
+		// Defaults to 4 ports ...
+		size_t port_count = (length >= 3) ? (size_t) atoi (arguments[2]) : 4; 
+
 		brx_control_message * message = create_message (
 			CREATE,
 			BRIDGE,
-			(size_t)  atoi (arguments[2]),
-			arguments[0],
+			port_count,
+			arguments[1],
 			NULL
 		);
 
+		if (!message) {
+			perror ("Failed to allocate control plane message\n");
+			return 1; 
+		} 
 
-		if (message->control_type == SUCCESS) printf("good\n");
-		if (message->control_type == ERROR) printf("not good\n");
+		if (send_brx_message(client_fd, message) < 0 || recv_brx_message(client_fd, message) < 0) {
+			perror("brx: communication with daemon failed\n");
+			free_message(message);
+			return 1;
+		}
 
+		int result = (message->control_type == SUCCESS) ? 0 : 1;
+		if (result != 0) { 
+			fprintf(stderr, "brx: %s\n", message->error);
+			free_message(message);
+			return result; 
+		} 
+
+		printf("good\n");
 		free_message(message);
-		return 0; 
+		return result;
 
 	} else if (strncmp (object, "show", MAX_BUFFER) == 0) {
+
+		if (length < 2) {
+			perror ("Usage: brx bridge create <name> [ports]\n"); 	
+			return 1; 
+		} 
+
+		// Defaults to 4 ports ...
+		size_t port_count = (length >= 3) ? (size_t) atoi (arguments[2]) : 4; 
 
 		brx_control_message * message = create_message (
 			SHOW,
 			BRIDGE,
-			(size_t)  atoi (arguments[2]),
-			arguments[0],
+			port_count,
+			arguments[1],
 			NULL
 		);
 
-		// send & recv message;
+		if (!message) {
+			perror ("Failed to allocate control plane message\n");
+			return 1; 
+		} 
+
+		if (send_brx_message(client_fd, message) < 0 || recv_brx_message(client_fd, message) < 0) {
+			perror("brx: communication with daemon failed\n");
+			free_message(message);
+			return 1;
+		}
+
+		int result = (message->control_type == SUCCESS) ? 0 : 1;
+		if (result != 0) { 
+			fprintf(stderr, "brx: %s\n", message->error);
+			free_message(message);
+			return result; 
+		} 
+
+		// Do something with the message ... 
+		printf("interface name: %s\n", message->payload.bridge_info.info.interface_name);
+		printf("port count: %zu\n", message->payload.bridge_info.info.port_count);
+		printf("mac address: \n", message->payload.bridge_info.info.mac_address);
+		printf("ip address: \n", message->payload.bridge_info.info.ip_address);
+		free_message(message);
+		return result;
 
 	} else if (strncmp (object, "delete", MAX_BUFFER) == 0) {
 
+		if (length < 2) {
+			perror ("Usage: brx bridge create <name> [ports]\n"); 	
+			return 1; 
+		} 
+
+		// Defaults to 4 ports ...
+		size_t port_count = (length >= 3) ? (size_t) atoi (arguments[2]) : 4; 
+
+		// TODO
 		brx_control_message * message = create_message (
 			DELETE,
 			BRIDGE,
-			(size_t)  atoi (arguments[2]),
-			arguments[0],
+			port_count,
+			arguments[1],
 			NULL
 		);
-	}  else if (strncmp (object, "add", MAX_BUFFER) == 0) {
-		// return add_device_to_bridge ();
-	}
+
+		if (!message) {
+			perror ("Failed to allocate control plane message\n");
+			return 1; 
+		} 
+
+		if (send_brx_message(client_fd, message) < 0 || recv_brx_message(client_fd, message) < 0) {
+			perror("brx: communication with daemon failed\n");
+			free_message(message);
+			return 1;
+		}
+
+		int result = (message->control_type == SUCCESS) ? 0 : 1;
+		if (result != 0) { 
+			fprintf(stderr, "brx: %s\n", message->error);
+			free_message (message);
+			return result; 
+		}
+	
+		printf("Deleted interface ... \n");
+		free_message (message);
+		return result;
+		
+	} else {
+		perror ("Unknown bridge command or weird state reached somehow");
+		return 1; 
+	} 		
 
 	return 0; 
 }
