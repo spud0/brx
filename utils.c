@@ -45,21 +45,38 @@ int tap_alloc (char *name) {
 } 
 
 brx_control_message * create_message (
-	message_type control_type, 
-	device_type dev_type, 
+	brx_message_type control_type, 
+	brx_device_type dev_type, 
 	size_t port_count,
 	char * bridge_name,
 	char * tap_name
 ) {
 
-	brx_control_message * message = malloc (sizeof (brx_control_message));
+	brx_control_message * message = calloc (1, sizeof (brx_control_message));
 	if (!message) return NULL; 
 
 	message->control_type = control_type;
 	message->dev_type = dev_type;
-	message->tap_name = tap_name;
-	message->bridge_name = bridge_name;
-	message->length = sizeof(brx_control_message);
+
+	if (control_type == CREATE || message->control_type == DELETE) {
+		if (dev_type == TAP) {
+			strncpy (message->payload.req.interface_name, tap_name, BRX_NAME_MAX - 1);
+			message->payload.req.port_count = 0; 
+		} 
+
+		if (dev_type == BRIDGE) {
+			strncpy (message->payload.req.interface_name, bridge_name, BRX_NAME_MAX - 1);
+			message->payload.req.port_count = port_count; 
+		} 
+	}
+
+
+	if (message->control_type == SHOW && dev_type == TAP)
+		strncpy(message->payload.tap_info.info.interface_name, tap_name, BRX_NAME_MAX);
+
+	if (message->control_type == SHOW && dev_type == BRIDGE)
+		strncpy(message->payload.bridge_info.info.interface_name, bridge_name, BRX_NAME_MAX);
+
 	return message; 
 }
 
@@ -73,36 +90,17 @@ int handle_bridge (char * arguments[], int length, int client_fd) {
 
 	if ((!arguments) || (length == 0))  return 1; 
 
-	// Need to have some sort of Control Plane Message 
-	// int txed = write (client_fd, ); 
-
 	const char* object = arguments[0];
-	message_type type = ERROR; 
-
 	if (strncmp(object, "create", MAX_BUFFER) == 0) {
 
 		brx_control_message * message = create_message (
 			CREATE,
 			BRIDGE,
-			(size_t) atoi (object[2]),
-			object[0],
+			(size_t)  atoi (arguments[2]),
+			arguments[0],
 			NULL
 		);
 
-		int txed = write (client_fd, message, sizeof(brx_control_message));
-		if (txed != sizeof(brx_control_message)) {
-			// ERROR 
-			printf("something weird with transmitting");
-			return 1;
-		}
-
-		int rxed = read (client_fd, message, sizeof(brx_control_message));
-		if (rxed != sizeof (brx_control_message)) {
-			// ERROR
-			printf("something weird with receiving");
-			free_message(message);
-			return 1;
-		}
 
 		if (message->control_type == SUCCESS) printf("good\n");
 		if (message->control_type == ERROR) printf("not good\n");
@@ -111,9 +109,26 @@ int handle_bridge (char * arguments[], int length, int client_fd) {
 		return 0; 
 
 	} else if (strncmp (object, "show", MAX_BUFFER) == 0) {
-		// return show_bridge (); 
+
+		brx_control_message * message = create_message (
+			SHOW,
+			BRIDGE,
+			(size_t)  atoi (arguments[2]),
+			arguments[0],
+			NULL
+		);
+
+		// send & recv message;
+
 	} else if (strncmp (object, "delete", MAX_BUFFER) == 0) {
-		// return remove_bridge ();
+
+		brx_control_message * message = create_message (
+			DELETE,
+			BRIDGE,
+			(size_t)  atoi (arguments[2]),
+			arguments[0],
+			NULL
+		);
 	}  else if (strncmp (object, "add", MAX_BUFFER) == 0) {
 		// return add_device_to_bridge ();
 	}

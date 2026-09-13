@@ -41,9 +41,10 @@ typedef struct brx_port {
 
 // Metadata about a device (tap0, etc), this is the MAC Address, IP Address, Name, MTU, State, etc...
 typedef struct brx_device_info {
-	char mac_address [MAC_ADDR_SIZE];
-	unsigned char interface_name [BRX_NAME_MAX]; 	
+	unsigned char mac_address [MAC_ADDR_SIZE];
 	unsigned char ip_address [IP_ADDR_SIZE]; 
+	char interface_name [BRX_NAME_MAX]; 	
+	size_t port_count; 
 	// TODO: Should also store stuff like mode of the device
 } brx_device_info;
 
@@ -98,7 +99,6 @@ typedef enum {
 // Will have more fields soon
 typedef struct brx_bridge_info {
 	brx_device_info info; 	
-	size_t tap_count; 
 } brx_bridge_info; 
 
 // Will have more fields soon
@@ -117,7 +117,7 @@ typedef struct brx_control_message {
 		// Used for CREATE & DELETE messages
 		brx_device_info req; 
 	
-		// Used for getting metadata about 	
+		// Used for getting metadata about tap's and bridge's
 		brx_tap_info tap_info;
 		brx_bridge_info bridge_info;
 
